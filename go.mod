@@ -3,6 +3,7 @@ module github.com/RenatoHioji/go-elastic-search-kafka-consumer
 go 1.25.1
 
 require (
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/twmb/franz-go v1.19.5 // indirect
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/fx v1.24.0 // indirect
