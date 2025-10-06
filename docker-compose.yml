@@ -1,37 +1,45 @@
 version: "3.9"
 
 services:
+  elasticsearch:
+    image: elastic/elasticsearch:9.0.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
   redpanda:
     image: redpandadata/redpanda:latest
     container_name: redpanda
     command:
       - redpanda start
-      - --smp 1
       - --overprovisioned
-      - --node-id 0
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --node-id=0
       - --check=false
-      - --kafka-addr 0.0.0.0:9092
-      - --advertise-kafka-addr redpanda:9092
-      - --pandaproxy-addr 0.0.0.0:8082
-      - --advertise-pandaproxy-addr redpanda:8082
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
     ports:
-      - "9092:9092"   # Kafka API
-      - "9644:9644"   # Admin API
-      - "8082:8082"   # Pandaproxy (optional)
-    networks:
-      - redpanda_net
+      - "9092:9092"     # Kafka interno (dentro do cluster)
+      - "19092:19092"   # Kafka externo (para apps locais)
+      - "9644:9644"     # Admin API
 
   redpanda-console:
     image: redpandadata/console:latest
     container_name: redpanda-console
     ports:
-      - "8080:8080"
+      - "8090:8080"   # UI do console
     environment:
-      - KAFKA_BROKERS=redpanda:9092
+      KAFKA_BROKERS: redpanda:9092
+      REDPANDA_ADMIN_API: http://redpanda:9644
     depends_on:
       - redpanda
-    networks:
-      - redpanda_net
 
 networks:
   redpanda_net:
